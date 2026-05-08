@@ -1,0 +1,10 @@
+instance/sage_credentials.ini
+instance/logs/
+instance/output/
+discover_output.txt
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
