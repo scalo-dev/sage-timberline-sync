@@ -153,6 +153,40 @@ If this fails by itself, it's a network/proxy issue, not a code issue.
 
 ---
 
+### Service stays "running" but no new exports happen for days
+
+Symptoms in `service.log`:
+```
+Connecting to DSN '...'
+Query: SELECT ...
+(silence for hours)
+[WARNING] apscheduler.scheduler: Execution... skipped: maximum number of running instances reached
+[WARNING] apscheduler.scheduler: Execution... skipped: maximum number of running instances reached
+[WARNING] apscheduler.scheduler: Execution... skipped: maximum number of running instances reached
+```
+
+A previous export hung inside `pyodbc` waiting for Sage to respond.
+Because `max_instances=1`, every subsequent scheduled tick is
+skipped while the zombie run is still nominally "in progress."
+The web UI keeps serving stale data, the service shows
+`SERVICE_RUNNING`, and nothing looks wrong from the outside.
+
+**Cause:** `pyodbc.connect()` and cursor execution default to
+**infinite** wait. A wedged Pervasive engine on the Sage server
+will hang your script indefinitely.
+
+**Fix (already in this template):**
+- `app/config.py` defines `SAGE_CONNECT_TIMEOUT` and
+  `SAGE_QUERY_TIMEOUT`, applied in `app/connection.py`.
+- The Flask UI sample in `docs/05-add-flask-ui.md` adds
+  `misfire_grace_time=300` so a queued tick that's older than 5
+  minutes is dropped instead of held forever.
+
+If you wrote your own scheduler glue, make sure both pieces are
+present.
+
+---
+
 ### Where to look first when something breaks
 
 Order of suspicion, in our experience:

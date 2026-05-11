@@ -75,7 +75,18 @@ from app.server import create_app   # your Flask factory
 def main():
     app = create_app()
     sched = BackgroundScheduler()
-    sched.add_job(run_export, "interval", hours=4, next_run_time=None)
+    sched.add_job(
+        run_export,
+        "interval",
+        hours=4,
+        id="export",
+        max_instances=1,
+        coalesce=True,
+        # If a previous run hung past its window (e.g. Sage was
+        # unreachable), drop the queued tick rather than letting
+        # max_instances=1 silently skip every subsequent run forever.
+        misfire_grace_time=300,
+    )
     sched.start()
     run_export()                    # one immediate run on startup
     serve(app, host="0.0.0.0", port=8765)

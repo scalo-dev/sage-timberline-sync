@@ -53,10 +53,20 @@ def build_connection_string(
 
 
 def open_connection():
-    """Open and return a live pyodbc connection using config defaults."""
+    """Open and return a live pyodbc connection using config defaults.
+
+    Both connect and query timeouts are applied. Without them, a hung
+    Sage server will hang your script forever - see config.py.
+    """
     import pyodbc  # imported lazily so this module can be inspected without ODBC
 
     from .credentials import load_credentials
 
     uid, pwd = load_credentials()
-    return pyodbc.connect(build_connection_string(uid, pwd), autocommit=True)
+    conn = pyodbc.connect(
+        build_connection_string(uid, pwd),
+        autocommit=True,
+        timeout=config.SAGE_CONNECT_TIMEOUT,
+    )
+    conn.timeout = config.SAGE_QUERY_TIMEOUT
+    return conn

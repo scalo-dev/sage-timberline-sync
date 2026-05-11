@@ -69,3 +69,15 @@ SAGE_COLUMNS: list[str] = [
 # everything and filter in Python (often safer because Timberline's
 # SQL flavor is finicky about expressions).
 SAGE_WHERE: str | None = None
+
+# ---------------------------------------------------------------------------
+# Timeouts (seconds)
+#
+# pyodbc defaults to INFINITE on both connect and query. If Sage's
+# Pervasive engine wedges, your script hangs forever - and any
+# scheduler wrapping it (APScheduler, cron, NSSM loop) will silently
+# stop running new exports because the previous one "is still in
+# progress." Always bound these.
+# ---------------------------------------------------------------------------
+SAGE_CONNECT_TIMEOUT = 30
+SAGE_QUERY_TIMEOUT = 120
